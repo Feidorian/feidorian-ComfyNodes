@@ -19,7 +19,7 @@ import folder_paths
 
 def get_comfy_image_mask(image_path: str) -> tuple[Image.Image, Image.Image, str]:
     i = Image.open(image_path)
-    
+
     prompt_text = i.info["prompt_text"] if "prompt_text" in i.info.keys() else ""
 
     i = ImageOps.exif_transpose(i)
@@ -92,6 +92,7 @@ class ImageTagger:
                 os.rename(old_file, new_file)
                 self.processed_file_count -= 1
                 self.unprocessed_file_count += 1
+        return files
 
     def set_start_time(self):
         self.start_time = datetime.now()
@@ -160,7 +161,7 @@ class WorkflowImageLoader:
             file for file in os.listdir(directory) if is_valid_image(directory, file)
         ]
 
-        tagger.fix_errors(directory, image_files)
+        image_files = tagger.fix_errors(directory, image_files)
 
         image_files = [
             file
@@ -188,7 +189,7 @@ class WorkflowImageSaver:
     @classmethod
     def IS_CHANGED(self, **kwargs):
         return float("nan")
-    
+
     @classmethod
     def INPUT_TYPES(cls):
         return {
@@ -225,6 +226,6 @@ class WorkflowImageSaver:
                 "subfolder": tagger.curr_sub_dir,
                 "type": self.type
             })
-  
+
         tagger.log_time()
         return {"ui": {"images": results}}
