@@ -1,5 +1,5 @@
 from .style_loader import Feidorian_StylesLoader, Feidorian_TextEncodedStylesLoader
-from .workflow_image_loader import Feidorian_WorkflowImageLoader
+# from .workflow_image_loader import Feidorian_WorkflowImageLoader
 from ..utils import generate_mappings
 
 

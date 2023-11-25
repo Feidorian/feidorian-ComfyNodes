@@ -12,8 +12,9 @@ from . import switches
 from . import loaders
 from . import debug
 from . import logic
+from . import literals
 
-NODES = [output, switches, loaders, debug, logic]
+NODES = [output, switches, loaders, debug, logic, literals]
 
 
 NODE_CLASS_MAPPINGS = []
