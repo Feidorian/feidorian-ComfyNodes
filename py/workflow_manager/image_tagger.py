@@ -146,7 +146,7 @@ class WorkflowImageLoader:
         if len(image_files) == 0:
             raise Exception(f"No Unprocessed File Found in directory {directory}!")
 
-        chosen_image = self.SELECTION_MODE(selection_mode)(image_files)
+        chosen_image = self.SELECTION_MODE[selection_mode](image_files)
         chosen_image_path = os.path.join(directory, chosen_image)
         tagger.process_file(directory, chosen_image)
         return get_comfy_image_mask(chosen_image_path)
