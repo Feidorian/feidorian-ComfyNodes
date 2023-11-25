@@ -177,9 +177,10 @@ class WorkflowImageSaver:
             raise Exception("Missing Path. Path must be provided to loader node.")
         filename = tagger.curr_product_filename
 
-        for index in range(len(Images)):
-            image = Images[index]
-            if index > 0:
+        img_count = -1
+        for image in Images:
+            img_count += 1
+            if img_count > 0:
                 filename = f"{filename}_{index:05d}"
             image = 255.0 * image.cpu().numpy()
             image = Image.fromarray(np.clip(image, 0, 255).astype(np.uint8))
