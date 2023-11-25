@@ -92,7 +92,7 @@ class ImageTagger:
                 os.rename(old_file, new_file)
                 self.processed_file_count -= 1
                 self.unprocessed_file_count += 1
-        return files
+        
 
     def set_start_time(self):
         self.start_time = datetime.now()
@@ -161,7 +161,11 @@ class WorkflowImageLoader:
             file for file in os.listdir(directory) if is_valid_image(directory, file)
         ]
 
-        image_files = tagger.fix_errors(directory, image_files)
+        tagger.fix_errors(directory, image_files)
+
+        image_files = [
+            file for file in os.listdir(directory) if is_valid_image(directory, file)
+        ]
 
         image_files = [
             file
