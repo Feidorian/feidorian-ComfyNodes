@@ -116,7 +116,7 @@ class WorkflowImageLoader:
         return {
             "required": {
                 "directory": ("STRING", {"placeholder": "Image Directory"}),
-                "selection_mode": (cls.SELECTION_MODE.keys(),),
+                "selection_mode": (list(cls.SELECTION_MODE.keys()),),
             }
         }
 
