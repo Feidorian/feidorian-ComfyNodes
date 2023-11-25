@@ -5,6 +5,7 @@
 from contextlib import contextmanager
 import io
 import sys
+import os
 from datetime import datetime, timedelta
 import torch
 import numpy as np
@@ -55,7 +56,8 @@ def generate_mappings(mappings):
     }
 
 
-def is_valid_image(path: str) -> bool:
+def is_valid_image(dir: str, filename:str) -> bool:
+    path = os.path.join(dir, filename)
     try:
         img = Image.open(path)
         img.verify()
