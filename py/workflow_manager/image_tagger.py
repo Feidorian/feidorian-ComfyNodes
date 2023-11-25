@@ -148,8 +148,9 @@ class WorkflowImageLoader:
 
         chosen_image = self.SELECTION_MODE[selection_mode](image_files)
         chosen_image_path = os.path.join(directory, chosen_image)
+        image, mask = get_comfy_image_mask(chosen_image_path)
         tagger.process_file(directory, chosen_image)
-        return get_comfy_image_mask(chosen_image_path)
+        return (image, mask)
 
 
 class WorkflowImageSaver:
