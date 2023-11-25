@@ -11,6 +11,7 @@ import numpy as np
 import math
 from PIL import Image, ImageOps
 
+
 @contextmanager
 def suppress_output():
     """
@@ -45,20 +46,26 @@ ANY_TYPE = AnyType("*")
 
 def generate_mappings(mappings):
     NODE_CLASS_MAPPINGS = [(item["name"], item["function"]) for item in mappings]
-    NODE_DISPLAY_NAME_MAPPINGS = [(item["name"], item["display_name"]) for item in mappings]
-    return {"NODE_CLASS_MAPPINGS":NODE_CLASS_MAPPINGS, "NODE_DISPLAY_NAME_MAPPINGS":NODE_DISPLAY_NAME_MAPPINGS}
+    NODE_DISPLAY_NAME_MAPPINGS = [
+        (item["name"], item["display_name"]) for item in mappings
+    ]
+    return {
+        "NODE_CLASS_MAPPINGS": NODE_CLASS_MAPPINGS,
+        "NODE_DISPLAY_NAME_MAPPINGS": NODE_DISPLAY_NAME_MAPPINGS,
+    }
 
 
-
-def is_valid_image(path):
+def is_valid_image(path: str) -> bool:
     try:
         img = Image.open(path)
         img.verify()
         Image.close()
         return True
-    except: return False
+    except:
+        return False
 
-def get_comfy_image_mask(image_path):
+
+def get_comfy_image_mask(image_path: str) -> tuple[Image.Image, Image.Image]:
     i = Image.open(image_path)
     i = ImageOps.exif_transpose(i)
     image = i.convert("RGB")
@@ -73,8 +80,8 @@ def get_comfy_image_mask(image_path):
     return (image, mask)
 
 
-class EllapsedTracker:
 
+class EllapsedTracker:
     def __init__(self):
         self.approx_time = None
         self.current_start_time = None
@@ -87,7 +94,7 @@ class EllapsedTracker:
             time = datetime.now()
             approx_time = (time - self.current_start_time).total_seconds()
             # if self.approx_time: self.approx_time = math.ceil((self.approx_time + approx_time)/2)
-        # else:
+            # else:
             self.approx_time = math.ceil(approx_time)
 
     def get_ellapsed(self):

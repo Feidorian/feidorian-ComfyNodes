@@ -13,9 +13,12 @@ from . import loaders
 from . import debug
 from . import logic
 from . import literals
+from . import workflow_manager
 
-NODES = [output, switches, loaders, debug, logic, literals]
+NODES = [output, switches, loaders, debug, logic, literals, workflow_manager]
 
+
+################## DO NOT EDIT PAST (BELOW) THIS LINE #####################################################
 
 NODE_CLASS_MAPPINGS = []
 NODE_DISPLAY_NAME_MAPPINGS = []
@@ -31,11 +34,13 @@ __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS"]
 print("\033[34mFeidorian Custom Nodes: \033[92mLoaded\033[0m")
 
 
-
-
 module_js_directory = os.path.join(os.path.dirname(os.path.realpath(__file__)), "js")
 application_root_directory = os.path.dirname(folder_paths.__file__)
-application_web_extensions_directory = os.path.join(application_root_directory, "web", "extensions", "Feidorian_Extensions")
+application_web_extensions_directory = os.path.join(
+    application_root_directory, "web", "extensions", "Feidorian_Extensions"
+)
 
-shutil.copytree(module_js_directory, application_web_extensions_directory, dirs_exist_ok=True)
+shutil.copytree(
+    module_js_directory, application_web_extensions_directory, dirs_exist_ok=True
+)
 print("\033[34mFeidorian Custom Extenstions: \033[92mLoaded\033[0m")
