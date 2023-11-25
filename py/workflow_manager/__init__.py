@@ -1,5 +1,5 @@
 from .image_tagger import WorkflowImageLoader, WorkflowImageSaver
-from ..utils import generate_mappings
+from ...utils import generate_mappings
 
 mappings = generate_mappings(
     [

@@ -1,4 +1,4 @@
-from ..utils import generate_mappings
+from ...utils import generate_mappings
 from .a_or_b import Feidorian_AOrB
 from .first_non_null import Feidorian_FirstNonNull
 from .vae_encode_if_any import Feidorian_VAEEncodeIfAny

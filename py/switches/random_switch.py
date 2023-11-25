@@ -3,7 +3,7 @@
 Made for ComfyUI
 """
 
-from ..utils import ANY_TYPE
+from ...utils import ANY_TYPE
 import random
 
 

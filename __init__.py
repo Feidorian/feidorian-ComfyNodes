@@ -7,13 +7,13 @@ Made for ComfyUI
 import os, shutil
 import folder_paths
 
-from . import output
-from . import switches
-from . import loaders
-from . import debug
-from . import logic
-from . import literals
-from . import workflow_manager
+from .py import output
+from .py import switches
+from .py import loaders
+from .py import debug
+from .py import logic
+from .py import literals
+from .py import workflow_manager
 
 NODES = [output, switches, loaders, debug, logic, literals, workflow_manager]
 

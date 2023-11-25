@@ -33,6 +33,6 @@ from PIL import Image, ImageOps
 from itertools import repeat
 import numpy as np
 from datetime import datetime, timedelta
-from ..log import log
-from ..utils import ellapsed_tracker
+from ...log import log
+from ...utils import ellapsed_tracker
 

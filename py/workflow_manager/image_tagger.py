@@ -9,8 +9,8 @@ from itertools import repeat
 import numpy as np
 import json
 from datetime import datetime, timedelta
-from ..log import log
-from ..utils import is_valid_image, get_comfy_image_mask
+from ...log import log
+from ...utils import is_valid_image, get_comfy_image_mask
 
 
 class ImageTagger:

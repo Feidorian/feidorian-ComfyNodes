@@ -1,6 +1,6 @@
 import folder_paths
 import csv
-from ..log import log
+from ...log import log
 from pathlib import Path
 
 

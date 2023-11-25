@@ -1,6 +1,6 @@
 from .any_switch import Feidorian_AnySwitch
 from .random_switch import Feidorian_RandomSwitch
-from ..utils import generate_mappings
+from ...utils import generate_mappings
 
 
 mappings = generate_mappings(
@@ -15,6 +15,6 @@ mappings = generate_mappings(
             "function": Feidorian_RandomSwitch,
             "display_name": "FD Random Switch",
         },
-   
+
     ]
 )

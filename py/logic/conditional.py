@@ -1,4 +1,4 @@
-from ..utils import ANY_TYPE
+from ...utils import ANY_TYPE
 
 
 class Feidorian_Conditional:

@@ -1,4 +1,4 @@
-from ..utils import generate_mappings
+from ...utils import generate_mappings
 from .text import Feidorian_TextLiteral, Feidorian_TextBoxLiteral, Feidorian_TextConcat
 
 

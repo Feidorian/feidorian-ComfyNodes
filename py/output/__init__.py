@@ -1,5 +1,5 @@
 from .image_save import Feidorian_ImageSave
-from ..utils import generate_mappings
+from ...utils import generate_mappings
 
 mappings  = generate_mappings(
   [

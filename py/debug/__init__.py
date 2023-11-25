@@ -7,7 +7,7 @@ Made for ComfyUI
 
 
 from .null_output import Feidorian_NullOutput
-from ..utils import generate_mappings
+from ...utils import generate_mappings
 
 
 
