@@ -3,14 +3,36 @@ import random
 import torch
 import random
 import os
-from PIL import Image, ImageOps
+from PIL import Image, ImageOps, ExifTags
 from PIL.PngImagePlugin import PngInfo
 from itertools import repeat
 import numpy as np
 import json
+import sys
 from datetime import datetime, timedelta
 from ...log import log
-from ...utils import is_valid_image, get_comfy_image_mask
+from ...utils import is_valid_image
+import folder_paths
+
+
+
+
+def get_comfy_image_mask(image_path: str) -> tuple[Image.Image, Image.Image, str]:
+    i = Image.open(image_path)
+    
+    prompt_text = i.info["prompt_text"] if "prompt_text" in i.info.keys() else ""
+
+    i = ImageOps.exif_transpose(i)
+    image = i.convert("RGB")
+    image = np.array(image).astype(np.float32) / 255.0
+    image = torch.from_numpy(image)[None,]
+    if "A" in i.getbands():
+        mask = np.array(i.getchannel("A")).astype(np.float32) / 255.0
+        mask = 1.0 - torch.from_numpy(mask)
+    else:
+        mask = torch.zeros((64, 64), dtype=torch.float32, device="cpu")
+
+    return (image, mask.unsqueeze(0), prompt_text)
 
 
 class ImageTagger:
@@ -20,6 +42,7 @@ class ImageTagger:
     curr_orig_filename = None
     curr_orig_ext = None
     curr_dir = None
+    curr_sub_dir = None
     curr_processed_filename = None
     curr_product_filename = None
 
@@ -85,7 +108,7 @@ class ImageTagger:
         self.unprocessed_file_count -= 1
         current_time = datetime.now()
         approx_time = math.ceil((current_time - self.start_time).total_seconds())
-        remaining_time = seconds = self.unprocessed_file_count * approx_time
+        remaining_time = self.unprocessed_file_count * approx_time
         log.info("**** Workflow Image Manager Status ****")
         log.info(f"Number of Tasks Completed: {self.processed_file_count}")
         log.info(f"Number of Tasks Left: {self.unprocessed_file_count}")
@@ -103,8 +126,8 @@ class WorkflowImageLoader:
         "random": ImageTagger.random_picker,
     }
 
-    RETURN_TYPES = ("IMAGE", "MASK")
-    RETURN_NAMES = ("image", "mask")
+    RETURN_TYPES = ("IMAGE", "MASK", "STRING")
+    RETURN_NAMES = ("image", "mask", "prompt_text")
     CATEGORY = "feidorian/workflow-manager"
     FUNCTION = "ImageLoader"
 
@@ -117,7 +140,7 @@ class WorkflowImageLoader:
         selection_mode = list(cls.SELECTION_MODE.keys())
         return {
             "required": {
-                "directory": ("STRING", {"placeholder": "Image Directory"}),
+                "sub_directory": ("STRING", {"placeholder": "Image Directory"}),
                 "selection_mode": (
                     selection_mode,
                     {"default": "random"},
@@ -125,8 +148,10 @@ class WorkflowImageLoader:
             }
         }
 
-    def ImageLoader(self, directory, selection_mode):
+    def ImageLoader(self, sub_directory, selection_mode):
         tagger.set_start_time()
+        tagger.curr_sub_dir = sub_directory
+        directory = os.path.join(folder_paths.get_output_directory(), sub_directory)
 
         if not os.path.exists(directory):
             raise Exception(f"Directory {directory} does not Exist.")
@@ -148,9 +173,9 @@ class WorkflowImageLoader:
 
         chosen_image = self.SELECTION_MODE[selection_mode](image_files)
         chosen_image_path = os.path.join(directory, chosen_image)
-        image, mask = get_comfy_image_mask(chosen_image_path)
+        image, mask, prompt_text = get_comfy_image_mask(chosen_image_path)
         tagger.process_file(directory, chosen_image)
-        return (image, mask)
+        return (image, mask, prompt_text)
 
 
 class WorkflowImageSaver:
@@ -161,44 +186,45 @@ class WorkflowImageSaver:
     type = "output"
 
     @classmethod
+    def IS_CHANGED(self, **kwargs):
+        return float("nan")
+    
+    @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "Images": ("IMAGE",),
+                "images": ("IMAGE",),
+                "prompt_text": ("STRING",{"default":""}),
                 "with_workflow": ("BOOLEAN", {"default": True}),
             },
             "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
         }
 
-    def ImageSaver(self, Images, with_workflow, prompt=None, extra_pnginfo=None):
+    def ImageSaver(self, images, with_workflow, prompt_text, prompt=None, extra_pnginfo=None):
         path = tagger.curr_dir
         results = list()
         if not path:
             raise Exception("Missing Path. Path must be provided to loader node.")
         filename = tagger.curr_product_filename
-
-        img_count = -1
-        for image in Images:
-            img_count += 1
-            if img_count > 0:
-                filename = f"{filename}_{index:05d}"
-            image = 255.0 * image.cpu().numpy()
-            image = Image.fromarray(np.clip(image, 0, 255).astype(np.uint8))
+        for image in images:
+            i = 255. * image.cpu().numpy()
+            img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
+            metadata = PngInfo()
+            metadata.add_text("prompt_text", prompt_text)
             if with_workflow:
-                metadata = PngInfo()
-                if prompt:
+                if prompt is not None:
                     metadata.add_text("prompt", json.dumps(prompt))
-                if extra_pnginfo:
+                if extra_pnginfo is not None:
                     for x in extra_pnginfo:
-                        metadata.add(x, json.dumps(extra_pnginfo[x]))
-            curr_filename = f"{filename}.png"
-            image.save(
-                os.path.join(path, curr_filename),
-                pnginfo=metadata,
-                compress_level=4,
-            )
-            results.append(
-                {"filename": curr_filename, "subfolder": "", "type": self.type}
-            )
+                        metadata.add_text(x, json.dumps(extra_pnginfo[x]))
+
+            file = f"{filename}.png"
+            img.save(os.path.join(path, file), pnginfo=metadata, compress_level=4)
+            results.append({
+                "filename": file,
+                "subfolder": tagger.curr_sub_dir,
+                "type": self.type
+            })
+  
         tagger.log_time()
         return {"ui": {"images": results}}

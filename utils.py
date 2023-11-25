@@ -78,7 +78,7 @@ def get_comfy_image_mask(image_path: str) -> tuple[Image.Image, Image.Image]:
     else:
         mask = torch.zeros((64, 64), dtype=torch.float32, device="cpu")
 
-    return (image, mask)
+    return (image, mask.unsqueeze(0))
 
 
 
