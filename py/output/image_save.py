@@ -23,23 +23,25 @@ class Feidorian_ImageSave:
     return {
       "required":{
         "Images":("IMAGE",),
-        "Path":("STRING",{"default":""}),
+        "sub_dir":("STRING",{"default":""}),
         "Opt_Filename":("STRING",{"default":""}),
         "Ext":("STRING",{"default":"png"}),
         "with_workflow": ("BOOLEAN",{"default":True}),
         "date_is_required":("BOOLEAN",{"default":False})
       },
       "optional":{
-        "GDataPipe":("GDATAPIPE",)
+        "prompt_text":("STRING",)
         },
         "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
     }
 
   #TODO: add other metadata info equiv to imagesave with metada and delete the imagesave w metadata extension
-  def ImageSave(self, Images, Path, Opt_Filename, Ext, with_workflow, date_is_required, GDataPipe=None, prompt=None, extra_pnginfo=None):
+  def ImageSave(self, Images, sub_dir, Opt_Filename, Ext, with_workflow, date_is_required, prompt_text=None, prompt=None, extra_pnginfo=None):
 
-    if not Path: Path = self.output_dir
-    if not os.path.isdir(Path): raise Exception(f"path: {Path} does not exist")
+    if not sub_dir: sub_dir = self.output_dir
+    else: sub_dir = os.path.join(self.output_dir, sub_dir)
+    
+    if not os.path.isdir(sub_dir): raise Exception(f"path: {sub_dir} does not exist")
 
     is_unique = Opt_Filename and date_is_required
     date_filename = time.strftime("%Y%m%d-%H%M%S")
@@ -48,9 +50,6 @@ class Feidorian_ImageSave:
 
     if is_unique: Opt_Filename = f"{Opt_Filename}_{date_filename}"
 
-    # if not Ext: Ext = "png"
-    # elif Ext.lower() != "png": raise Exception("Only png extension formats allowed")
-    # else: Ext = Ext.lower()
     Ext = "png"
 
     img_count = 0;
@@ -63,7 +62,7 @@ class Feidorian_ImageSave:
 
       i = 255. * img.cpu().numpy()
       img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
-      metadata = PngInfo() if GDataPipe or with_workflow else None
+      metadata = PngInfo() if prompt_text or with_workflow else None
 
       if with_workflow:
         if prompt is not None:
@@ -71,20 +70,10 @@ class Feidorian_ImageSave:
         if extra_pnginfo is not None:
           for x in extra_pnginfo:
             metadata.add_text(x, json.dumps(extra_pnginfo[x]))
-      if GDataPipe:
-        metadata.add_text("Positive", str(GDataPipe[0]))
-        metadata.add_text("Negative", str(GDataPipe[1]))
-        metadata.add_text("Model", str(GDataPipe[2]))
-        metadata.add_text("Sampler", str(GDataPipe[3]))
-        metadata.add_text("Scheduler", str(GDataPipe[4]))
-        metadata.add_text("CFG", str(GDataPipe[5]))
-        metadata.add_text("Steps", str(GDataPipe[6]))
-        metadata.add_text("Seed", str(GDataPipe[7]))
-        metadata.add_text("Width", str(GDataPipe[8]))
-        metadata.add_text("Height", str(GDataPipe[9]))
-      # print(GDataPipe, "was here")
+      if prompt_text:
+        metadata.add_text("prompt_text", str(prompt_text))
 
-      img.save(os.path.join(Path, final_filename), pnginfo=metadata, compress_level=4)
+      img.save(os.path.join(sub_dir, final_filename), pnginfo=metadata, compress_level=4)
       results.append({ "filename": final_filename,"subfolder":"", "type": self.type})
 
 
@@ -96,13 +85,3 @@ class Feidorian_ImageSave:
 
 
 
-
-
-## Sampler
-## Model
-## CFGScale
-## Steps
-## Seed
-## ClipSkip
-## Positive
-## Negative
