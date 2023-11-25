@@ -61,7 +61,6 @@ def is_valid_image(dir: str, filename:str) -> bool:
     try:
         img = Image.open(path)
         img.verify()
-        Image.close()
         return True
     except:
         return False
