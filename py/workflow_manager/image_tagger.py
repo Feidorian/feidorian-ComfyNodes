@@ -52,7 +52,7 @@ class ImageTagger:
         self.processed_file_count = len(processed_files)
         product_files = [file for file in files if self.PRODUCT_TAG in file]
         self.unprocessed_file_count = len(
-            [file for file in files if file not in processed_files + product_file]
+            [file for file in files if file not in (processed_files + product_file)]
         )
         for processed_file in processed_files:
             is_valid = False
