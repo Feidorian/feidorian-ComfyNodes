@@ -113,10 +113,14 @@ class WorkflowImageLoader:
 
     @classmethod
     def INPUT_TYPES(cls):
+        selection_mode = list(cls.SELECTION_MODE.keys())
         return {
             "required": {
                 "directory": ("STRING", {"placeholder": "Image Directory"}),
-                "selection_mode": (list(cls.SELECTION_MODE.keys()),),
+                "selection_mode": (
+                    selection_mode,
+                    {"default": "random"},
+                ),
             }
         }
 
@@ -145,6 +149,7 @@ class WorkflowImageLoader:
         chosen_image_path = os.path.join(directory, chosen_image)
         tagger.process_file(directory, chosen_image)
         return get_comfy_image_mask(chosen_image_path)
+
 
 class WorkflowImageSaver:
     CATEGORY = "feidorian/workflow-manager"
