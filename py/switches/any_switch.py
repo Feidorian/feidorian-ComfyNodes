@@ -25,5 +25,5 @@ class Feidorian_AnySwitch:
             }
         }
 
-    def AnySwitch(self, value1: ANY_TYPE, value2: ANY_TYPE, Input:int) -> ANY_TYPE:
-      return (value1 if Input == 1 else value2,)
+    def AnySwitch(self, value1: ANY_TYPE, value2: ANY_TYPE, Input: int) -> ANY_TYPE:
+        return (value1 if Input == 1 else value2,)
