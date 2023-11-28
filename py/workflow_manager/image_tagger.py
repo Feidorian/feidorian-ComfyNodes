@@ -15,26 +15,6 @@ from ...utils import is_valid_image
 import folder_paths
 
 
-
-
-def get_comfy_image_mask(image_path: str) -> tuple[Image.Image, Image.Image, str]:
-    i = Image.open(image_path)
-
-    prompt_text = i.info["prompt_text"] if "prompt_text" in i.info.keys() else ""
-
-    i = ImageOps.exif_transpose(i)
-    image = i.convert("RGB")
-    image = np.array(image).astype(np.float32) / 255.0
-    image = torch.from_numpy(image)[None,]
-    if "A" in i.getbands():
-        mask = np.array(i.getchannel("A")).astype(np.float32) / 255.0
-        mask = 1.0 - torch.from_numpy(mask)
-    else:
-        mask = torch.zeros((64, 64), dtype=torch.float32, device="cpu")
-
-    return (image, mask.unsqueeze(0), prompt_text)
-
-
 class ImageTagger:
     PRODUCT_TAG = "product_"
     PROCESSED_TAG = "processed_"
@@ -49,6 +29,24 @@ class ImageTagger:
     start_time = None
     processed_file_count = 0
     unprocessed_file_count = 0
+
+    @staticmethod
+    def get_comfy_image_mask(image_path: str) -> tuple[Image.Image, Image.Image, str]:
+        i = Image.open(image_path)
+
+        prompt_text = i.info["prompt_text"] if "prompt_text" in i.info.keys() else ""
+
+        i = ImageOps.exif_transpose(i)
+        image = i.convert("RGB")
+        image = np.array(image).astype(np.float32) / 255.0
+        image = torch.from_numpy(image)[None,]
+        if "A" in i.getbands():
+            mask = np.array(i.getchannel("A")).astype(np.float32) / 255.0
+            mask = 1.0 - torch.from_numpy(mask)
+        else:
+            mask = torch.zeros((64, 64), dtype=torch.float32, device="cpu")
+
+        return (image, mask.unsqueeze(0), prompt_text)
 
     @staticmethod
     def random_picker(images: list[str]) -> str:
@@ -92,7 +90,6 @@ class ImageTagger:
                 os.rename(old_file, new_file)
                 self.processed_file_count -= 1
                 self.unprocessed_file_count += 1
-        
 
     def set_start_time(self):
         self.start_time = datetime.now()
@@ -178,7 +175,7 @@ class WorkflowImageLoader:
 
         chosen_image = self.SELECTION_MODE[selection_mode](image_files)
         chosen_image_path = os.path.join(directory, chosen_image)
-        image, mask, prompt_text = get_comfy_image_mask(chosen_image_path)
+        image, mask, prompt_text = tagger.get_comfy_image_mask(chosen_image_path)
         tagger.process_file(directory, chosen_image)
         return (image, mask, prompt_text)
 
@@ -199,20 +196,22 @@ class WorkflowImageSaver:
         return {
             "required": {
                 "images": ("IMAGE",),
-                "prompt_text": ("STRING",{"default":""}),
+                "prompt_text": ("STRING", {"default": ""}),
                 "with_workflow": ("BOOLEAN", {"default": True}),
             },
             "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
         }
 
-    def ImageSaver(self, images, with_workflow, prompt_text, prompt=None, extra_pnginfo=None):
+    def ImageSaver(
+        self, images, with_workflow, prompt_text, prompt=None, extra_pnginfo=None
+    ):
         path = tagger.curr_dir
         results = list()
         if not path:
             raise Exception("Missing Path. Path must be provided to loader node.")
         filename = tagger.curr_product_filename
         for image in images:
-            i = 255. * image.cpu().numpy()
+            i = 255.0 * image.cpu().numpy()
             img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
             metadata = PngInfo()
             metadata.add_text("prompt_text", prompt_text)
@@ -225,11 +224,9 @@ class WorkflowImageSaver:
 
             file = f"{filename}.png"
             img.save(os.path.join(path, file), pnginfo=metadata, compress_level=4)
-            results.append({
-                "filename": file,
-                "subfolder": tagger.curr_sub_dir,
-                "type": self.type
-            })
+            results.append(
+                {"filename": file, "subfolder": tagger.curr_sub_dir, "type": self.type}
+            )
 
         tagger.log_time()
         return {"ui": {"images": results}}
