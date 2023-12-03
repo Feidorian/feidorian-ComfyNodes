@@ -29,6 +29,7 @@ class ImageTagger:
     start_time = None
     processed_file_count = 0
     unprocessed_file_count = 0
+    error_file_count = 0
 
     @staticmethod
     def get_comfy_image_mask(image_path: str) -> tuple[Image.Image, Image.Image, str]:
@@ -91,6 +92,8 @@ class ImageTagger:
                 self.processed_file_count -= 1
                 self.unprocessed_file_count += 1
 
+
+
     def set_start_time(self):
         self.start_time = datetime.now()
 
@@ -98,6 +101,7 @@ class ImageTagger:
         self.start_time = None
         self.processed_file_count = 0
         self.unprocessed_file_count = 0
+        self.error_file_count = 0
 
     def log_time(self):
         if not self.start_time:
@@ -110,6 +114,7 @@ class ImageTagger:
         log.info("**** Workflow Image Manager Status ****")
         log.info(f"Number of Tasks Completed: {self.processed_file_count}")
         log.info(f"Number of Tasks Left: {self.unprocessed_file_count}")
+        log.info(f"Number of Detected Errors: {self.error_file_count}")
         log.info(f"Previous Completion Time: {timedelta(seconds=approx_time)}")
         log.info(f"Remaining Time (Estimate): {timedelta(seconds=remaining_time)}")
         self.__reset__()
