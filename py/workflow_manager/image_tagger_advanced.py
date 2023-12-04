@@ -9,6 +9,7 @@
 import math
 import random
 import shutil
+import time
 import torch
 import random
 import os
@@ -59,19 +60,31 @@ class ImageTagger:
         except OSError as e:
             raise Exception(f"Error creating Directory '{dir}': {e}")
 
-    def __is_valid_image(file_path: str) -> bool:
+    def __is_valid_image(self, file_path: str) -> bool:
         try:
             img = Image.open(file_path)
             img.verify()
             return True
         except:
             return False
+        
+  
 
     def start_timer(self):
         self.status_params["start_time"] = datetime.now()
 
     def end_timer(self):
-        self.status_params["end_time"] = datetime.now()
+        end_time = datetime.now()
+        start_time = self.status_params["start_time"]
+        processed_file_count = self.status_params["processed_file_count"] + 1
+        unprocessed_file_count = self.status_params["unprocessed_file_count"] - 1
+        approx_time = math.ceil((end_time - start_time).total_seconds())
+        remaining_time = unprocessed_file_count * approx_time
+        log.info("**** Workflow Image Manager Advanced Status ****")
+        log.info(f"Number of Tasks Completed: {processed_file_count}")
+        log.info(f"Number of Tasks Left: {unprocessed_file_count}")
+        log.info(f"Previous Completion Time: {timedelta(seconds=approx_time)}")
+        log.info(f"Remaining Time (Estimate): {timedelta(seconds=remaining_time)}")
 
     def fix_errors_and_approve_products(self):
         self.status_params["processed_file_count"] = 0
@@ -155,8 +168,10 @@ class ImageTagger:
 
         # Check if there is at least one valid image file
         if not valid_image_files:
+            log.info("**** Workflow Image Manager Advanced Status ****")
+            log.info("**** ALL IMAGES PROCESSED ****")
             raise Exception(
-                f"No valid image files found in the base directory {self.BASE_DIRECTORY}."
+                f"All Images Processed: No valid image files found in the base directory {self.BASE_DIRECTORY}."
             )
 
         self.status_params["unprocessed_file_count"] = len(valid_image_files)
@@ -168,8 +183,8 @@ class ImageTagger:
         base_file_name, base_file_ext = os.path.splitext(selected_image)
         sub_directory = os.path.join(self.BASE_DIRECTORY, base_file_name)
         # Raise Exception if subdirectory exists
-        if os.path.exists(sub_directory):
-            raise Exception(f"Directory '{sub_directory}' already exists.")
+        if not os.path.exists(sub_directory):
+            os.makedirs(sub_directory)
         processed_file_variant = self.PROCESSED_TAG + base_file_name + base_file_ext
         product_file_variant = self.PRODUCT_TAG + base_file_name + base_file_ext
         # rename selected file to processed file name variant
@@ -211,22 +226,7 @@ class ImageTagger:
     def linear_picker(images: list[str]) -> str:
         return images[0]
 
-    def log_status(self):
-        # if not self.start_time:
-        #     return
-        # self.processed_file_count += 1
-        # self.unprocessed_file_count -= 1
-        # current_time = datetime.now()
-        # approx_time = math.ceil((current_time - self.start_time).total_seconds())
-        # remaining_time = self.unprocessed_file_count * approx_time
-        # log.info("**** Workflow Image Manager Status ****")
-        # log.info(f"Number of Tasks Completed: {self.processed_file_count}")
-        # log.info(f"Number of Tasks Left: {self.unprocessed_file_count}")
-        # log.info(f"Number of Detected Errors: {self.error_file_count}")
-        # log.info(f"Previous Completion Time: {timedelta(seconds=approx_time)}")
-        # log.info(f"Remaining Time (Estimate): {timedelta(seconds=remaining_time)}")
-        # self.__reset__()
-        pass
+    
 
 
 tagger = ImageTagger()
@@ -260,6 +260,7 @@ class WorkflowImageLoaderAdvanced:
         }
 
     def ImageLoader(self, selection_mode):
+        tagger.start_timer()
         tagger.fix_errors_and_approve_products()
         selected_file_path = tagger.select_and_prepare_image_file(
             self.SELECTION_MODE[selection_mode]
@@ -285,36 +286,42 @@ class WorkflowImageSaverAdvanced:
                 "images": ("IMAGE",),
                 "prompt_text": ("STRING", {"default": ""}),
                 "with_workflow": ("BOOLEAN", {"default": True}),
+                "to_cached":("BOOLEAN", {"default":False})
             },
             "hidden": {"prompt": "PROMPT", "extra_pnginfo": "EXTRA_PNGINFO"},
         }
 
     def ImageSaver(
-        self, images, with_workflow, prompt_text, prompt=None, extra_pnginfo=None
+        self, images, prompt_text, with_workflow, to_cached, prompt=None, extra_pnginfo=None
     ):
-        pass
-        # path = tagger.curr_dir
-        # results = list()
-        # if not path:
-        #     raise Exception("Missing Path. Path must be provided to loader node.")
-        # filename = tagger.curr_product_filename
-        # for image in images:
-        #     i = 255.0 * image.cpu().numpy()
-        #     img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
-        #     metadata = PngInfo()
-        #     metadata.add_text("prompt_text", prompt_text)
-        #     if with_workflow:
-        #         if prompt is not None:
-        #             metadata.add_text("prompt", json.dumps(prompt))
-        #         if extra_pnginfo is not None:
-        #             for x in extra_pnginfo:
-        #                 metadata.add_text(x, json.dumps(extra_pnginfo[x]))
+        if to_cached:
+            path = tagger.CACHED_DIRECTORY
+            filename = time.strftime("%Y%m%d-%H%M%S") + ".png"
+        else:
+            path =  tagger.tracking_params["file_dir"]
+            filename = tagger.tracking_params["file_name"]
+        
+        results = list()
+        if not path:
+            raise Exception("Missing Path. Path must be provided to loader node.")
+        for image in images:
+            i = 255.0 * image.cpu().numpy()
+            img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
+            metadata = PngInfo()
+            metadata.add_text("prompt_text", prompt_text)
+            if with_workflow:
+                if prompt is not None:
+                    metadata.add_text("prompt", json.dumps(prompt))
+                if extra_pnginfo is not None:
+                    for x in extra_pnginfo:
+                        metadata.add_text(x, json.dumps(extra_pnginfo[x]))
 
-        #     file = f"{filename}.png"
-        #     img.save(os.path.join(path, file), pnginfo=metadata, compress_level=4)
-        #     results.append(
-        #         {"filename": file, "subfolder": tagger.curr_sub_dir, "type": self.type}
-        #     )
+            file = filename
+            img.save(os.path.join(path, file), pnginfo=metadata, compress_level=4)
+            sub_dir = os.path.relpath(path, folder_paths.get_output_directory())
+            results.append(
+                {"filename": file, "subfolder": sub_dir, "type": self.type}
+            )
 
-        # tagger.log_time()
-        # return {"ui": {"images": results}}
+        tagger.end_timer()
+        return {"ui": {"images": results}}
