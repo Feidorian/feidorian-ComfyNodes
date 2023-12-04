@@ -33,7 +33,7 @@ class ImageTagger:
         folder_paths.get_output_directory(), "WORKFLOW_IMAGES_ADVANCED"
     )
     APPROVED_DIRECTORY = os.path.join(BASE_DIRECTORY, "APPROVED_IMAGES")
-    CACHED_DIRECTORY = os.path.join(BASE_DIRECTORY, "CACHED_IMAGEs")
+    CACHED_DIRECTORY = os.path.join(BASE_DIRECTORY, "CACHED_IMAGES")
     PROTECTED_DIRECTORY_PATHS = [BASE_DIRECTORY, APPROVED_DIRECTORY, CACHED_DIRECTORY]
 
     status_params = {
@@ -153,6 +153,11 @@ class ImageTagger:
                 # Delete the non-protected directory
                 shutil.rmtree(dir_path)
 
+            # remove path if no valid image files exist in it
+            if not processed_files and not product_files:
+                shutil.rmtree(dir_path)
+
+
     def select_and_prepare_image_file(self, select_func):
         valid_image_files = []
         # Iterate the base directory
@@ -181,6 +186,7 @@ class ImageTagger:
         selected_image_path = os.path.join(self.BASE_DIRECTORY, selected_image)
         # Create a sub-directory, naming it with the file's name (without extension)
         base_file_name, base_file_ext = os.path.splitext(selected_image)
+        base_file_name = base_file_name.replace(tagger.PROCESSED_TAG, "").replace(tagger.PRODUCT_TAG, "")
         sub_directory = os.path.join(self.BASE_DIRECTORY, base_file_name)
         # Raise Exception if subdirectory exists
         if not os.path.exists(sub_directory):
