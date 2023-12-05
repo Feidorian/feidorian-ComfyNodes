@@ -329,5 +329,5 @@ class WorkflowImageSaverAdvanced:
                 {"filename": file, "subfolder": sub_dir, "type": self.type}
             )
 
-        tagger.end_timer()
+        if not to_cached: tagger.end_timer()
         return {"ui": {"images": results}}
