@@ -50,6 +50,7 @@ class ImageTagger:
         self.__create_dir(self.BASE_DIRECTORY)
         self.__create_dir(self.APPROVED_DIRECTORY)
         self.__create_dir(self.CACHED_DIRECTORY)
+        self.__create_dir(self.TEMPLATE_DIRECTORY)
 
     def __create_dir(self, dir: str) -> None:
         try:
