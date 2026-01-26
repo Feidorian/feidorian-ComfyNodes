@@ -1,0 +1,14 @@
+[project]
+name = "feidorian-comfynodes"
+description = "This extension provides various custom nodes. literals, loaders, logic, output, switches"
+version = "1.0.0"
+license = "LICENSE"
+
+[project.urls]
+Repository = "https://github.com/Feidorian/feidorian-ComfyNodes"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "feidorian-ComfyNodes"
+Icon = ""
